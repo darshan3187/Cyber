@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+
+@theme {
+  --color-primary: #6C63FF;
+  --color-primary-hover: #5A52D9;
+  
+  --color-danger: #FF4757;
+  --color-warning: #FF6B35;
+  --color-caution: #FFD700;
+  --color-safe: #2ED573;
+  
+  --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  :root {
+    --bg-color: #0F1117;
+    --surface-color: #1A1D27;
+    --text-primary: #FFFFFF;
+    --text-secondary: #8B8FA8;
+    --border-color: rgba(255,255,255,0.08);
+  }
+
+  .light {
+    --bg-color: #F8F9FA;
+    --surface-color: #FFFFFF;
+    --text-primary: #1A1A2E;
+    --text-secondary: #646882;
+    --border-color: rgba(0,0,0,0.08);
+  }
+
+  html, body {
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    font-family: var(--font-sans);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  #root {
+    height: 100%;
+    display: flex;
+  }
+}
+
+@layer components {
+  .surface-card {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem; /* rounded-2xl */
+    backdrop-filter: blur(12px);
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem; /* rounded-xl */
+    font-weight: 500;
+    transition: all 200ms ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .btn:hover {
+    transform: scale(1.02);
+  }
+  
+  .btn:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+  }
+  
+  .btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(108, 99, 255, 0.1);
+  }
+
+  .text-secondary-color {
+    color: var(--text-secondary);
+  }
+  
+  .border-soft {
+    border-color: var(--border-color);
+  }
+}
+
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slideUpFade {
+  animation: slideUpFade 300ms ease-out forwards;
+}
+
+/* Custom Scrollbar for better dark look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
