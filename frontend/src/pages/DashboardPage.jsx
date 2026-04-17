@@ -3,13 +3,13 @@ import { useApp } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 import { jsPDF } from 'jspdf';
-import { Download, Shield, Target, Flame, Activity, BrainCircuit } from 'lucide-react';
+import { Download, Shield, Target, Flame, Activity, BrainCircuit, Zap, Trophy, Award, Lock } from 'lucide-react';
 import { classifyThreat } from '../utils/anthropic';
 
 const COLORS = ['#FF4757', '#FF6B35', '#FFD700', '#2ED573']; // Red, Orange, Yellow, Green
 
 const DashboardPage = () => {
-  const { xp, streak, history, quizHistory } = useApp();
+  const { xp, streak, history, quizHistory, badges } = useApp();
   const dashboardRef = useRef(null);
   const [aiTip, setAiTip] = useState("Analyzing your patterns...");
   const [historyTab, setHistoryTab] = useState('scans'); // 'scans' or 'quizzes'
@@ -20,18 +20,30 @@ const DashboardPage = () => {
   // Chart 1: XP over time (mocked for demo over 7 days if not enough history)
   // Let's generate a graph based on today, subtracting days.
   const getGraphData = () => {
+    let rollingXp = xp;
+    const dailyDeltas = {};
+
+    [history, quizHistory].forEach(dataset => {
+      dataset.forEach(entry => {
+        const dStr = new Date(entry.timestamp).toDateString();
+        if (!dailyDeltas[dStr]) dailyDeltas[dStr] = 0;
+        dailyDeltas[dStr] += (entry.xpEarned || entry.score || 0);
+      });
+    });
+
     const data = [];
     const today = new Date();
-    for(let i=6; i>=0; i--) {
+    
+    for(let i=0; i<=6; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const dayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
-      // Count XP from history for this day, or mock a baseline if empty
-      const historyThisDay = history.filter(h => new Date(h.timestamp).toDateString() === d.toDateString());
-      const xpThisDay = historyThisDay.reduce((sum, h) => sum + (h.xpEarned || 0), 0);
-      data.push({ name: dayStr, xp: xpThisDay + (history.length === 0 ? Math.floor(Math.random() * 50) : 0) });
+      
+      data.push({ name: dayStr, xp: rollingXp });
+      rollingXp -= (dailyDeltas[d.toDateString()] || 0);
     }
-    return data;
+    
+    return data.reverse();
   };
 
   // Chart 2: Weak spots (mistakes in game mode, or categories of threats found)
@@ -42,12 +54,11 @@ const DashboardPage = () => {
         counts[h.category]++;
       }
     });
-    // Add mock data if empty so chart doesn't look bland
-    if (totalScans === 0) {
-      counts.Phishing = 3;
-      counts.Malware = 1;
-      counts['Social Engineering'] = 2;
-    }
+
+    const hasData = Object.values(counts).some(v => v > 0);
+    // Only display legitimate data
+    if (!hasData) return [];
+    
     return Object.keys(counts).map(key => ({ name: key, value: counts[key] }));
   };
 
@@ -188,6 +199,44 @@ const DashboardPage = () => {
           cursorY += 8;
         });
       }
+      
+      // 4. Quiz History Optimized
+      checkPageBreak(30);
+      pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("Recent Quiz History", 20, cursorY);
+      cursorY += 10;
+
+      if (quizHistory.length === 0) {
+        pdf.setFontSize(12);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text("No quiz history recorded yet.", 25, cursorY);
+      } else {
+        pdf.setFontSize(11);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont(undefined, 'bold');
+        pdf.text("Date", 25, cursorY);
+        pdf.text("Status", 90, cursorY);
+        pdf.text("Accuracy", 140, cursorY);
+        pdf.text("Score", 180, cursorY);
+        cursorY += 6;
+        
+        pdf.line(25, cursorY, pageWidth - 20, cursorY);
+        cursorY += 6;
+
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(60, 60, 60);
+
+        quizHistory.slice(0, 50).forEach((item) => {
+          checkPageBreak(10);
+          const dateStr = new Date(item.timestamp).toLocaleDateString();
+          pdf.text(dateStr, 25, cursorY);
+          pdf.text(item.status || "Unknown", 90, cursorY);
+          pdf.text(item.accuracy || "0/0", 140, cursorY);
+          pdf.text(`+${item.score || 0}`, 180, cursorY);
+          cursorY += 8;
+        });
+      }
 
       pdf.save('CyberGuard_Optimized_Report.pdf');
     } catch (err) {
@@ -226,6 +275,50 @@ const DashboardPage = () => {
             </div>
           </div>
         ))}
+      </div>
+      
+      {/* Badges Cabinet */}
+      <div className="surface-card p-6 overflow-hidden relative">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Award className="text-yellow-500" /> Achievement Badges
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+              {badges.length} / 8 Unlocked
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+          {[
+            { id: 'rookie', name: 'Cyber Rookie', icon: Shield, req: '100 XP', color: 'text-zinc-300 bg-zinc-400/20 border-zinc-400/30' },
+            { id: 'spotter', name: 'Threat Spotter', icon: Target, req: '1k XP', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' },
+            { id: 'analyst', name: 'Security Analyst', icon: Activity, req: '2k XP', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20' },
+            { id: 'hunter', name: 'Threat Hunter', icon: Flame, req: '3k XP', color: 'text-orange-500 bg-orange-500/10 border-orange-500/20' },
+            { id: 'guardian', name: 'Cyber Guardian', icon: Shield, req: '4k XP', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
+            { id: 'unstoppable', name: 'Unstoppable!', icon: Zap, req: '5 Hits', color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' },
+            { id: 'perfect_round', name: 'Perfect Round', icon: Trophy, req: '10/10 Check', color: 'text-purple-500 bg-purple-500/10 border-purple-500/20' },
+            { id: 'phishing_spotter', name: 'Phishing Spotter', icon: BrainCircuit, req: 'Catch Phish', color: 'text-sky-500 bg-sky-500/10 border-sky-500/20' }
+          ].sort((a,b) => {
+            const aOn = badges.includes(a.id);
+            const bOn = badges.includes(b.id);
+            if (aOn && !bOn) return -1;
+            if (!aOn && bOn) return 1;
+            return 0;
+          }).map((b) => {
+            const isUnlocked = badges.includes(b.id);
+            const Icon = b.icon;
+            return (
+              <div key={b.id} className={`flex flex-col items-center justify-center text-center p-3 rounded-xl border ${isUnlocked ? b.color : 'bg-transparent border-soft text-secondary-color grayscale opacity-50'} transition-all`}>
+                <div className={`mb-2 p-2 rounded-full ${isUnlocked ? 'bg-white/10 dark:bg-black/10' : ''}`}>
+                  {isUnlocked ? <Icon size={24} /> : <Lock size={24} />}
+                </div>
+                <div className="font-bold text-xs uppercase tracking-wider truncate w-full">{b.name}</div>
+                <div className="text-[10px] opacity-70 truncate w-full">{b.req}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -288,10 +381,10 @@ const DashboardPage = () => {
           </div>
 
           <div className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl z-10 w-full mt-auto">
-            <div className="text-xs font-bold text-indigo-400 uppercase mb-1 flex items-center gap-1">
+            <div className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase mb-1 flex items-center gap-1">
               <BrainCircuit size={14} /> AI Analysis
             </div>
-            <p className="text-sm text-indigo-100">{aiTip}</p>
+            <p className="text-sm text-[var(--text-primary)]">{aiTip}</p>
           </div>
         </div>
       </div>

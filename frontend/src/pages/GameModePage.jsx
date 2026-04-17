@@ -148,7 +148,7 @@ const GameModePage = () => {
       // End game
       setRound(11);
       if (correctCount === 10) unlockBadge('perfect_round', 'Perfect Round! 10/10');
-      unlockBadge('cyber_rookie', 'Cyber Rookie (First Scan/Game completed)');
+      unlockBadge('rookie', 'Cyber Rookie (First Scan/Game completed)');
       
       addQuizHistory({
         score: sessionScore,

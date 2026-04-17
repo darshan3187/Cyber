@@ -8,7 +8,12 @@ export const AppProvider = ({ children }) => {
   const [theme, setTheme] = useState(localStorage.getItem('cyberguard_theme') || 'dark');
   const [xp, setXp] = useState(parseInt(localStorage.getItem('cyberguard_xp')) || 0);
   const [streak, setStreak] = useState(parseInt(localStorage.getItem('cyberguard_streak')) || 0);
-  const [badges, setBadges] = useState(JSON.parse(localStorage.getItem('cyberguard_badges')) || []);
+  const [badges, setBadges] = useState(() => {
+    const raw = JSON.parse(localStorage.getItem('cyberguard_badges')) || [];
+    // Heal bad data keys gracefully
+    const healed = raw.map(id => id === 'cyber_rookie' ? 'rookie' : id);
+    return [...new Set(healed)];
+  });
   const [history, setHistory] = useState(JSON.parse(localStorage.getItem('cyberguard_history')) || []);
   const [quizHistory, setQuizHistory] = useState(JSON.parse(localStorage.getItem('cyberguard_quiz_history')) || []);
   const [posts, setPosts] = useState(JSON.parse(localStorage.getItem('cyberguard_posts')) || getInitialPosts());
@@ -27,27 +32,31 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const checkStreak = () => {
       const lastLoginStr = localStorage.getItem('cyberguard_last_login');
-      const today = new Date().toDateString();
+      const today = new Date();
+      const todayStr = today.toDateString();
       
-      if (lastLoginStr !== today) {
-        let newStreak = parseInt(localStorage.getItem('cyberguard_streak')) || 0;
+      if (lastLoginStr !== todayStr) {
+        let currentStreak = parseInt(localStorage.getItem('cyberguard_streak')) || 0;
+        let newStreak = 1;
+
         if (lastLoginStr) {
           const lastLogin = new Date(lastLoginStr);
+          const diffTime = Math.abs(today - lastLogin);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           
           if (lastLogin.toDateString() === yesterday.toDateString()) {
-            newStreak += 1;
-          } else {
+            newStreak = currentStreak + 1;
+          } else if (diffDays > 1) {
             newStreak = 1;
           }
-        } else {
-          newStreak = 1;
         }
         
         setStreak(newStreak);
         localStorage.setItem('cyberguard_streak', newStreak.toString());
-        localStorage.setItem('cyberguard_last_login', today);
+        localStorage.setItem('cyberguard_last_login', todayStr);
       }
     };
     
@@ -104,10 +113,10 @@ export const AppProvider = ({ children }) => {
   const checkLevelUp = (oldXp, newXp) => {
     // Unlock badges based on XP milestones
     if (oldXp < 100 && newXp >= 100) unlockBadge('rookie', 'Cyber Rookie');
-    if (oldXp < 300 && newXp >= 300) unlockBadge('spotter', 'Threat Spotter');
-    if (oldXp < 600 && newXp >= 600) unlockBadge('analyst', 'Security Analyst');
-    if (oldXp < 1000 && newXp >= 1000) unlockBadge('hunter', 'Threat Hunter');
-    if (oldXp < 2000 && newXp >= 2000) unlockBadge('guardian', 'Cyber Guardian');
+    if (oldXp < 1000 && newXp >= 1000) unlockBadge('spotter', 'Threat Spotter');
+    if (oldXp < 2000 && newXp >= 2000) unlockBadge('analyst', 'Security Analyst');
+    if (oldXp < 3000 && newXp >= 3000) unlockBadge('hunter', 'Threat Hunter');
+    if (oldXp < 4000 && newXp >= 4000) unlockBadge('guardian', 'Cyber Guardian');
   };
 
   const unlockBadge = (badgeId, badgeName) => {

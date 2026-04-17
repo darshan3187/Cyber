@@ -4,7 +4,7 @@ import { Shield, LayoutDashboard, Gamepad2, Users, Target } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const Sidebar = ({ className = '' }) => {
-  const { xp, isQuizActive, setIsQuizActive } = useApp();
+  const { isQuizActive, setIsQuizActive } = useApp();
   
   const navItems = [
     { name: 'Analyse', path: '/analyse', icon: Shield },
@@ -54,13 +54,6 @@ const Sidebar = ({ className = '' }) => {
         })}
       </div>
 
-      <div className="p-4 m-4 surface-card flex flex-col gap-2 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div className="flex justify-between items-center relative z-10">
-          <span className="text-sm font-semibold text-secondary-color">Total XP</span>
-          <span className="text-[var(--color-primary)] font-bold">{xp}</span>
-        </div>
-      </div>
     </aside>
   );
 };
