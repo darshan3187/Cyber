@@ -4,12 +4,12 @@ import { Shield, LayoutDashboard, Gamepad2, Users, Target } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const Sidebar = ({ className = '' }) => {
-  const { xp } = useApp();
+  const { xp, isQuizActive, setIsQuizActive } = useApp();
   
   const navItems = [
     { name: 'Analyse', path: '/analyse', icon: Shield },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Game Mode', path: '/game', icon: Gamepad2 },
+    { name: 'Cyber Quiz', path: '/game', icon: Gamepad2 },
     { name: 'Community', path: '/community', icon: Users },
   ];
 
@@ -29,6 +29,16 @@ const Sidebar = ({ className = '' }) => {
             <NavLink
               key={item.name}
               to={item.path}
+              onClick={(e) => {
+                if (isQuizActive && item.path !== '/game') {
+                  const confirmNavigation = window.confirm("Do you want to change tab? It will end your active quiz.");
+                  if (!confirmNavigation) {
+                    e.preventDefault();
+                  } else {
+                    setIsQuizActive(false);
+                  }
+                }
+              }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive 

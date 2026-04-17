@@ -10,8 +10,12 @@ export const AppProvider = ({ children }) => {
   const [streak, setStreak] = useState(parseInt(localStorage.getItem('cyberguard_streak')) || 0);
   const [badges, setBadges] = useState(JSON.parse(localStorage.getItem('cyberguard_badges')) || []);
   const [history, setHistory] = useState(JSON.parse(localStorage.getItem('cyberguard_history')) || []);
+  const [quizHistory, setQuizHistory] = useState(JSON.parse(localStorage.getItem('cyberguard_quiz_history')) || []);
   const [posts, setPosts] = useState(JSON.parse(localStorage.getItem('cyberguard_posts')) || getInitialPosts());
   const [showToast, setShowToast] = useState(null); // { title: '', icon: '', type: 'badge' | 'xp' }
+
+  // Game/Quiz State
+  const [isQuizActive, setIsQuizActive] = useState(false);
 
   // Threat Analyzer State
   const [analyzerInput, setAnalyzerInput] = useState('');
@@ -87,6 +91,16 @@ export const AppProvider = ({ children }) => {
     return newEntry;
   };
 
+  const addQuizHistory = (entry) => {
+    const newEntry = { ...entry, id: Date.now(), timestamp: new Date().toISOString() };
+    setQuizHistory(prev => {
+      const updated = [newEntry, ...prev];
+      localStorage.setItem('cyberguard_quiz_history', JSON.stringify(updated));
+      return updated;
+    });
+    return newEntry;
+  };
+
   const checkLevelUp = (oldXp, newXp) => {
     // Unlock badges based on XP milestones
     if (oldXp < 100 && newXp >= 100) unlockBadge('rookie', 'Cyber Rookie');
@@ -122,6 +136,8 @@ export const AppProvider = ({ children }) => {
       streak, setStreak,
       badges, unlockBadge,
       history, addHistory,
+      quizHistory, addQuizHistory,
+      isQuizActive, setIsQuizActive,
       posts, addPost,
       showToast, setShowToast,
       analyzerInput, setAnalyzerInput,

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import * as htmlToImage from 'html-to-image';
+
 import { jsPDF } from 'jspdf';
 import { Download, Shield, Target, Flame, Activity, BrainCircuit } from 'lucide-react';
 import { classifyThreat } from '../utils/anthropic';
@@ -9,9 +9,10 @@ import { classifyThreat } from '../utils/anthropic';
 const COLORS = ['#FF4757', '#FF6B35', '#FFD700', '#2ED573']; // Red, Orange, Yellow, Green
 
 const DashboardPage = () => {
-  const { xp, streak, history } = useApp();
+  const { xp, streak, history, quizHistory } = useApp();
   const dashboardRef = useRef(null);
   const [aiTip, setAiTip] = useState("Analyzing your patterns...");
+  const [historyTab, setHistoryTab] = useState('scans'); // 'scans' or 'quizzes'
 
   const totalScans = history.length;
   const threatsCaught = history.filter(h => h.category !== 'Safe').length;
@@ -295,19 +296,33 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* History Table */}
+      {/* History Table / Quiz History */}
       <div className="surface-card overflow-hidden text-sm">
         <div className="p-6 border-b border-soft flex justify-between items-center">
-          <h3 className="text-lg font-bold">Recent Scans</h3>
-          {/* We could add filters here */}
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setHistoryTab('scans')}
+              className={`text-lg font-bold transition-colors ${historyTab === 'scans' ? 'text-[var(--text-primary)]' : 'text-secondary-color hover:text-[var(--text-primary)]'}`}
+            >
+              Recent Scans
+            </button>
+            <div className="w-px h-6 bg-[var(--border-color)]"></div>
+            <button 
+              onClick={() => setHistoryTab('quizzes')}
+              className={`text-lg font-bold transition-colors ${historyTab === 'quizzes' ? 'text-[var(--text-primary)]' : 'text-secondary-color hover:text-[var(--text-primary)]'}`}
+            >
+              Quiz History
+            </button>
+          </div>
         </div>
         
-        {history.length === 0 ? (
-          <div className="p-8 text-center text-secondary-color">
-            <Shield size={48} className="mx-auto mb-3 opacity-20" />
-            <p>No history found. Try analysing a threat first!</p>
-          </div>
-        ) : (
+        {historyTab === 'scans' ? (
+          history.length === 0 ? (
+            <div className="p-8 text-center text-secondary-color">
+              <Shield size={48} className="mx-auto mb-3 opacity-20" />
+              <p>No history found. Try analysing a threat first!</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -349,6 +364,47 @@ const DashboardPage = () => {
               </tbody>
             </table>
           </div>
+          )
+        ) : (
+          quizHistory.length === 0 ? (
+            <div className="p-8 text-center text-secondary-color">
+              <Target size={48} className="mx-auto mb-3 opacity-20" />
+              <p>No quiz history found. Try taking a Cyber Quiz first!</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[var(--border-color)]/20 text-left">
+                    <th className="px-6 py-4 font-semibold text-secondary-color">Date</th>
+                    <th className="px-6 py-4 font-semibold text-secondary-color">Score</th>
+                    <th className="px-6 py-4 font-semibold text-secondary-color">Accuracy</th>
+                    <th className="px-6 py-4 font-semibold text-secondary-color">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-soft">
+                  {quizHistory.slice(0, 10).map((item) => (
+                    <tr key={item.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-secondary-color">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-bold text-[var(--color-primary)]">
+                        +{item.score} XP
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-secondary-color">
+                        {item.accuracy}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.status === 'Completed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
     </div>

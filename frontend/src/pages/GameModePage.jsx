@@ -35,8 +35,7 @@ const GAME_SAMPLES = [
 ];
 
 const GameModePage = () => {
-  const { addXp, streak, setStreak, unlockBadge } = useApp();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { addXp, streak, setStreak, unlockBadge, isQuizActive, setIsQuizActive, addQuizHistory } = useApp();
   const [round, setRound] = useState(0);
   const [sessionScore, setSessionScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -57,10 +56,31 @@ const GameModePage = () => {
     setSessionScore(0);
     setCorrectCount(0);
     setStreakInGame(0);
-    setIsPlaying(true);
+    setIsQuizActive(true);
     setCurrentResult(null);
     setStartTime(Date.now());
   };
+
+  const stateRef = useRef({ sessionScore, correctCount, round, isQuizActive });
+  useEffect(() => {
+    stateRef.current = { sessionScore, correctCount, round, isQuizActive };
+  }, [sessionScore, correctCount, round, isQuizActive]);
+
+  useEffect(() => {
+    return () => {
+      const state = stateRef.current;
+      if (state.isQuizActive) {
+        // Record aborted quiz
+        addQuizHistory({
+          score: state.sessionScore,
+          accuracy: `${state.correctCount}/${Math.max(state.round - 1, 0)}`,
+          status: 'Aborted'
+        });
+        setIsQuizActive(false);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePredict = async (prediction) => {
     if (currentResult || isClassifying) return; // Prevent double clicks
@@ -129,6 +149,13 @@ const GameModePage = () => {
       setRound(11);
       if (correctCount === 10) unlockBadge('perfect_round', 'Perfect Round! 10/10');
       unlockBadge('cyber_rookie', 'Cyber Rookie (First Scan/Game completed)');
+      
+      addQuizHistory({
+        score: sessionScore,
+        accuracy: `${correctCount}/10`,
+        status: 'Completed'
+      });
+      setIsQuizActive(false);
     } else {
       setRound(prev => prev + 1);
       setCurrentResult(null);
@@ -136,16 +163,16 @@ const GameModePage = () => {
     }
   };
 
-  if (!isPlaying) {
+  if (!isQuizActive && round < 11) {
     return (
       <div className="max-w-4xl mx-auto h-full flex flex-col items-center justify-center space-y-8 animate-slideUpFade">
         <div className="text-center space-y-4">
           <div className="mx-auto w-24 h-24 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(99,102,241,0.3)]">
             <Gamepad2 size={48} />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">Threat Hunter Training</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Cyber Quiz</h1>
           <p className="text-xl text-secondary-color max-w-2xl">
-            Test your instincts in a rapid-fire prediction game. Identify 10 real-world threats correctly to earn XP and level up.
+            Test your instincts in a rapid-fire prediction quiz. Identify 10 real-world threats correctly to earn XP and level up.
           </p>
         </div>
         
@@ -202,7 +229,7 @@ const GameModePage = () => {
           <button onClick={startSession} className="btn btn-primary w-full py-4 text-lg">
             Play Again
           </button>
-          <button onClick={() => setIsPlaying(false)} className="btn btn-secondary w-full py-4 text-lg mt-4">
+          <button onClick={() => { setIsQuizActive(false); setRound(0); }} className="btn btn-secondary w-full py-4 text-lg mt-4">
             Back to Menu
           </button>
         </div>
