@@ -102,7 +102,10 @@ const AnalysePage = () => {
     await new Promise(r => setTimeout(r, 600));
 
     try {
-      const classification = await classifyThreat(inputText, activeTab.toLowerCase());
+      const allowedTypes = ['url', 'email', 'message', 'text'];
+      const requestType = allowedTypes.includes(activeTab?.toLowerCase()) ? activeTab.toLowerCase() : 'text';
+      
+      const classification = await classifyThreat(inputText, requestType);
       setResult(classification);
       
       // Calculate XP
