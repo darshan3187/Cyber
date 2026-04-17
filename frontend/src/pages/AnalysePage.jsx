@@ -110,7 +110,7 @@ const AnalysePage = () => {
       
       // Calculate XP
       let xpEarned = 10;
-      if (simulationActive && prediction) {
+      if (prediction) {
         if (classification.category === prediction) {
           xpEarned = 25;
         }
@@ -200,7 +200,7 @@ const AnalysePage = () => {
         </div>
       </div>
 
-      {simulationActive && !result && !isAnalyzing && (
+      {inputText.trim() && !result && !isAnalyzing && (
         <div className="surface-card p-6 border-indigo-500/30 animate-slideUpFade">
           <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-400">
             <ScanSearch size={20} /> Training Simulation Active
@@ -256,7 +256,7 @@ const AnalysePage = () => {
               </div>
             </div>
             
-            {simulationActive && prediction && (
+            {prediction && (
               <div className={`px-4 py-2 rounded-xl border ${result.category === prediction ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
                 <div className="text-xs font-bold uppercase tracking-wider opacity-70">Your prediction</div>
                 <div className="font-bold flex items-center gap-1 mt-1">
